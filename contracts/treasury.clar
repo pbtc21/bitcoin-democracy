@@ -1,6 +1,10 @@
 ;; treasury.clar
-;; City Treasury - accepts sBTC deposits, mints governance tokens
-;; 1 sBTC = 1,000,000 CityBTC tokens (micro-units)
+;; City Treasury - Bitzion model
+;;
+;; - Accepts sBTC deposits, mints governance tokens
+;; - Coordinator has DIRECT spending authority (no voting per spend)
+;; - Board can dilute (mint tokens) as "tax"
+;; - Hodlers can deposit/withdraw freely
 
 ;; Constants
 (define-constant contract-owner tx-sender)
@@ -9,11 +13,11 @@
 (define-constant err-insufficient-balance (err u102))
 (define-constant err-invalid-amount (err u103))
 (define-constant err-transfer-failed (err u104))
-(define-constant err-not-authorized (err u105))
+(define-constant err-not-coordinator (err u105))
+(define-constant err-not-board (err u106))
+(define-constant err-no-coordinator (err u107))
 
 ;; Conversion rate: 1 sBTC (8 decimals) = 1,000,000 tokens (6 decimals)
-;; sBTC has 8 decimals, our token has 6
-;; 1 sBTC = 100,000,000 sats = 1,000,000 CityBTC
 (define-constant sbtc-to-token-multiplier u10000)
 
 ;; State
@@ -23,10 +27,13 @@
 ;; Track individual contributions
 (define-map contributions principal uint)
 
-;; Authorized council for withdrawals
-(define-data-var council-contract principal contract-owner)
+;; Coordinator - has direct spending authority
+(define-data-var coordinator (optional principal) none)
 
-;; sBTC contract reference (testnet)
+;; Board contract - can dilute
+(define-data-var board-contract principal contract-owner)
+
+;; sBTC contract reference
 (define-data-var sbtc-contract principal 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc-token)
 
 ;; Deposit sBTC and receive governance tokens
@@ -78,20 +85,52 @@
     (print {event: "withdraw", withdrawer: withdrawer, tokens-burned: token-amount, sbtc-returned: sbtc-amount})
     (ok sbtc-amount)))
 
-;; Council-authorized treasury spend
-(define-public (council-spend (amount uint) (recipient principal) (memo (optional (buff 34))))
-  (begin
-    (asserts! (is-eq contract-caller (var-get council-contract)) err-not-authorized)
+;; Coordinator direct spend - NO voting required
+;; The coordinator has full authority over treasury spending
+(define-public (coordinator-spend (amount uint) (recipient principal) (memo (optional (buff 34))))
+  (let
+    (
+      (current-coordinator (unwrap! (var-get coordinator) err-no-coordinator))
+    )
+    (asserts! (is-eq tx-sender current-coordinator) err-not-coordinator)
     (asserts! (not (var-get paused)) err-paused)
     (asserts! (> amount u0) err-invalid-amount)
 
     ;; Transfer sBTC from treasury to recipient
     (try! (as-contract (contract-call? .mock-sbtc transfer amount tx-sender recipient memo)))
 
-    (print {event: "council-spend", amount: amount, recipient: recipient})
+    (print {event: "coordinator-spend", coordinator: current-coordinator, amount: amount, recipient: recipient})
+    (ok true)))
+
+;; Board dilution - mint new tokens (tax)
+;; Only callable by board contract after approval
+(define-public (board-dilute (amount uint))
+  (begin
+    (asserts! (is-eq contract-caller (var-get board-contract)) err-not-board)
+    (asserts! (> amount u0) err-invalid-amount)
+
+    ;; Mint tokens to treasury itself (for coordinator to spend)
+    (try! (contract-call? .city-btc-token mint amount (as-contract tx-sender)))
+
+    (print {event: "board-dilution", amount: amount})
     (ok true)))
 
 ;; Admin Functions
+
+;; Set coordinator - only callable by board contract
+(define-public (set-coordinator (new-coordinator principal))
+  (begin
+    (asserts! (is-eq contract-caller (var-get board-contract)) err-not-board)
+    (var-set coordinator (some new-coordinator))
+    (print {event: "coordinator-set", coordinator: new-coordinator})
+    (ok true)))
+
+;; Set board contract (one-time setup)
+(define-public (set-board-contract (board principal))
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (var-set board-contract board)
+    (ok true)))
 
 ;; Emergency pause
 (define-public (set-paused (is-paused bool))
@@ -99,13 +138,6 @@
     (asserts! (is-eq tx-sender contract-owner) err-owner-only)
     (var-set paused is-paused)
     (print {event: "pause-toggled", paused: is-paused})
-    (ok true)))
-
-;; Set council contract for authorized spending
-(define-public (set-council-contract (council principal))
-  (begin
-    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
-    (var-set council-contract council)
     (ok true)))
 
 ;; Set sBTC contract reference
@@ -129,8 +161,11 @@
 (define-read-only (get-paused)
   (var-get paused))
 
-(define-read-only (get-council-contract)
-  (var-get council-contract))
+(define-read-only (get-coordinator)
+  (var-get coordinator))
+
+(define-read-only (get-board-contract)
+  (var-get board-contract))
 
 (define-read-only (calculate-tokens-for-deposit (sbtc-amount uint))
   (* sbtc-amount sbtc-to-token-multiplier))

@@ -1,6 +1,6 @@
 [project]
 name = "bitcoin-democracy"
-description = "A network of 30 sBTC-funded city-states with plutocratic governance"
+description = "Bitzion: 30 sBTC-funded city-states with hyperelection governance"
 authors = []
 telemetry = false
 cache_dir = "./.cache"
@@ -17,17 +17,17 @@ depends_on = ["sip-010-trait"]
 path = "contracts/city-btc-token.clar"
 depends_on = ["sip-010-trait"]
 
+[contracts.hyperelection]
+path = "contracts/hyperelection.clar"
+depends_on = ["city-btc-token"]
+
 [contracts.treasury]
 path = "contracts/treasury.clar"
 depends_on = ["city-btc-token", "mock-sbtc"]
 
-[contracts.election]
-path = "contracts/election.clar"
-depends_on = ["city-btc-token"]
-
-[contracts.council]
-path = "contracts/council.clar"
-depends_on = ["treasury", "election"]
+[contracts.board]
+path = "contracts/board.clar"
+depends_on = ["hyperelection", "treasury"]
 
 [contracts.democracy-factory]
 path = "contracts/democracy-factory.clar"
