@@ -1,0 +1,21 @@
+{
+  "name": "bitcoin-democracy",
+  "version": "1.0.0",
+  "description": "A network of 30 sBTC-funded city-states with plutocratic governance",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@hirosystems/clarinet-sdk": "^2.7.0",
+    "@stacks/transactions": "^6.17.0",
+    "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@scure/bip32": "^2.0.1",
+    "@scure/bip39": "^2.0.1",
+    "@stacks/network": "^7.3.1",
+    "@stacks/wallet-sdk": "^7.2.0",
+    "c32check": "^2.0.0"
+  }
+}
