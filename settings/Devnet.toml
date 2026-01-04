@@ -1,0 +1,31 @@
+[network]
+name = "devnet"
+deployment_fee_rate = 10
+
+[accounts.deployer]
+mnemonic = "twice particular affair smile push picture miss direct toss property leave zero"
+balance = 100_000_000_000_000
+
+[accounts.wallet_1]
+mnemonic = "sell invite acquire kitten bamboo drastic jelly vivid peace spawn twice guilt"
+balance = 100_000_000_000_000
+
+[accounts.wallet_2]
+mnemonic = "hold excess usual excess ring elephant install account glad dry fragile donkey"
+balance = 100_000_000_000_000
+
+[accounts.wallet_3]
+mnemonic = "cycle puppy glare enroll cost improve round trend wrist mushroom scorpion tower"
+balance = 100_000_000_000_000
+
+[accounts.wallet_4]
+mnemonic = "board list obtain sugar hour worth raven scout denial thunder horse logic"
+balance = 100_000_000_000_000
+
+[accounts.wallet_5]
+mnemonic = "hurry aunt blame peanut heavy update captain human rice crime juice adult"
+balance = 100_000_000_000_000
+
+[devnet]
+disable_stacks_explorer = true
+disable_stacks_api = true

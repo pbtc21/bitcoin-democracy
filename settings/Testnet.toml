@@ -1,0 +1,7 @@
+[network]
+name = "testnet"
+deployment_fee_rate = 10
+
+# Add testnet account mnemonic before deployment
+# [accounts.deployer]
+# mnemonic = "your testnet mnemonic here"
