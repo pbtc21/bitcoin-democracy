@@ -81,7 +81,7 @@
 ;; Council-authorized treasury spend
 (define-public (council-spend (amount uint) (recipient principal) (memo (optional (buff 34))))
   (begin
-    (asserts! (is-eq tx-sender (var-get council-contract)) err-not-authorized)
+    (asserts! (is-eq contract-caller (var-get council-contract)) err-not-authorized)
     (asserts! (not (var-get paused)) err-paused)
     (asserts! (> amount u0) err-invalid-amount)
 
@@ -126,7 +126,7 @@
 (define-read-only (get-treasury-balance)
   (contract-call? .mock-sbtc get-balance (as-contract tx-sender)))
 
-(define-read-only (is-paused)
+(define-read-only (get-paused)
   (var-get paused))
 
 (define-read-only (get-council-contract)

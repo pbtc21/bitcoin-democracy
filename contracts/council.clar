@@ -54,8 +54,7 @@
       (proposer tx-sender)
       (proposal-id (var-get proposal-nonce))
     )
-    (asserts! (unwrap! (contract-call? .election is-council-member proposer) err-not-council-member)
-              err-not-council-member)
+    (asserts! (contract-call? .election is-council-member proposer) err-not-council-member)
 
     (map-set proposals proposal-id {
       proposer: proposer,
@@ -82,8 +81,7 @@
       (proposer tx-sender)
       (proposal-id (var-get proposal-nonce))
     )
-    (asserts! (unwrap! (contract-call? .election is-council-member proposer) err-not-council-member)
-              err-not-council-member)
+    (asserts! (contract-call? .election is-council-member proposer) err-not-council-member)
 
     (map-set proposals proposal-id {
       proposer: proposer,
@@ -109,8 +107,7 @@
       (voter tx-sender)
       (proposal (unwrap! (map-get? proposals proposal-id) err-proposal-not-found))
     )
-    (asserts! (unwrap! (contract-call? .election is-council-member voter) err-not-council-member)
-              err-not-council-member)
+    (asserts! (contract-call? .election is-council-member voter) err-not-council-member)
     (asserts! (is-none (map-get? proposal-votes {proposal-id: proposal-id, voter: voter})) err-already-voted)
     (asserts! (<= (- block-height (get created-at proposal)) proposal-duration) err-proposal-expired)
     (asserts! (not (get executed proposal)) err-proposal-already-executed)

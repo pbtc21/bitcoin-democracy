@@ -6,11 +6,16 @@ telemetry = false
 cache_dir = "./.cache"
 requirements = []
 
+[contracts.sip-010-trait]
+path = "contracts/sip-010-trait.clar"
+
 [contracts.mock-sbtc]
 path = "contracts/mock-sbtc.clar"
+depends_on = ["sip-010-trait"]
 
 [contracts.city-btc-token]
 path = "contracts/city-btc-token.clar"
+depends_on = ["sip-010-trait"]
 
 [contracts.treasury]
 path = "contracts/treasury.clar"
@@ -26,7 +31,6 @@ depends_on = ["treasury", "election"]
 
 [contracts.democracy-factory]
 path = "contracts/democracy-factory.clar"
-depends_on = ["city-btc-token", "treasury", "election", "council"]
 
 [repl.analysis]
 passes = ["check_checker"]

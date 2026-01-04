@@ -3,7 +3,7 @@
 ;; Format: [City]BTC (e.g., MiamiBTC)
 ;; 1 sBTC deposited = 1,000,000 tokens (micro-units for precision)
 
-(impl-trait 'SP3FBR2AGK5H9QBDH3EEN6DF8EK8JY7RX8QJ5SVTE.sip-010-trait-ft-standard.sip-010-trait)
+(impl-trait .sip-010-trait.sip-010-trait)
 
 ;; Constants
 (define-constant contract-owner tx-sender)
@@ -53,14 +53,14 @@
 ;; Mint tokens - only authorized minter (treasury)
 (define-public (mint (amount uint) (recipient principal))
   (begin
-    (asserts! (is-eq tx-sender (var-get authorized-minter)) err-owner-only)
+    (asserts! (is-eq contract-caller (var-get authorized-minter)) err-owner-only)
     (asserts! (> amount u0) err-invalid-amount)
     (ft-mint? city-btc amount recipient)))
 
-;; Burn tokens - only token holder can burn their own
+;; Burn tokens - only treasury or token holder can burn
 (define-public (burn (amount uint) (owner principal))
   (begin
-    (asserts! (is-eq tx-sender owner) err-not-token-owner)
+    (asserts! (or (is-eq tx-sender owner) (is-eq contract-caller (var-get authorized-minter))) err-not-token-owner)
     (asserts! (> amount u0) err-invalid-amount)
     (ft-burn? city-btc amount owner)))
 

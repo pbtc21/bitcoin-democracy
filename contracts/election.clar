@@ -108,13 +108,13 @@
       (current-delegate (map-get? delegations delegator))
     )
     (match current-delegate
-      delegate
-      (let ((amount (default-to u0 (map-get? delegation-amounts {delegator: delegator, delegate: delegate}))))
-        (map-set candidate-votes delegate
-          (- (default-to u0 (map-get? candidate-votes delegate)) amount))
-        (map-delete delegation-amounts {delegator: delegator, delegate: delegate})
+      current-del
+      (let ((amount (default-to u0 (map-get? delegation-amounts {delegator: delegator, delegate: current-del}))))
+        (map-set candidate-votes current-del
+          (- (default-to u0 (map-get? candidate-votes current-del)) amount))
+        (map-delete delegation-amounts {delegator: delegator, delegate: current-del})
         (map-delete delegations delegator)
-        (print {event: "undelegation", delegator: delegator, former-delegate: delegate})
+        (print {event: "undelegation", delegator: delegator, former-delegate: current-del})
         (ok true))
       err-not-registered)))
 
@@ -127,13 +127,13 @@
       (current-delegate (map-get? delegations delegator))
     )
     (match current-delegate
-      delegate
-      (let ((old-amount (default-to u0 (map-get? delegation-amounts {delegator: delegator, delegate: delegate}))))
+      current-del
+      (let ((old-amount (default-to u0 (map-get? delegation-amounts {delegator: delegator, delegate: current-del}))))
         ;; Update candidate votes with difference
-        (map-set candidate-votes delegate
-          (+ (- (default-to u0 (map-get? candidate-votes delegate)) old-amount) new-voting-power))
-        (map-set delegation-amounts {delegator: delegator, delegate: delegate} new-voting-power)
-        (print {event: "delegation-refreshed", delegator: delegator, delegate: delegate, new-amount: new-voting-power})
+        (map-set candidate-votes current-del
+          (+ (- (default-to u0 (map-get? candidate-votes current-del)) old-amount) new-voting-power))
+        (map-set delegation-amounts {delegator: delegator, delegate: current-del} new-voting-power)
+        (print {event: "delegation-refreshed", delegator: delegator, delegate: current-del, new-amount: new-voting-power})
         (ok new-voting-power))
       err-not-registered)))
 
@@ -167,8 +167,8 @@
   (map-set council-members member true))
 
 ;; Validate that provided list is ordered by votes (simplified - trusts input order)
-(define-private (validate-council-list (candidates (list 5 principal)))
-  candidates)
+(define-private (validate-council-list (council-candidates (list 5 principal)))
+  council-candidates)
 
 ;; Vote to recall a council member
 (define-public (vote-recall (member principal))
