@@ -33,8 +33,8 @@
 ;; Board contract - can dilute
 (define-data-var board-contract principal contract-owner)
 
-;; sBTC contract reference
-(define-data-var sbtc-contract principal 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM.sbtc-token)
+;; sBTC contract reference (set via set-sbtc-contract after deployment)
+(define-data-var sbtc-contract principal contract-owner)
 
 ;; Deposit sBTC and receive governance tokens
 (define-public (deposit (amount uint))
