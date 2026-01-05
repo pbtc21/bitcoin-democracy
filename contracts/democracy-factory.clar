@@ -49,7 +49,7 @@
       token-name: token-name,
       ticker: ticker,
       active: true,
-      created-at: block-height,
+      created-at: stacks-block-height,
       total-staked: u0
     })
 
