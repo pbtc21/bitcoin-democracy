@@ -19,10 +19,14 @@
 (define-constant err-threshold-not-met (err u105))
 (define-constant err-invalid-proposal-type (err u106))
 (define-constant err-no-coordinator (err u107))
+(define-constant err-proposal-expired (err u108))
 
 ;; 16/30 majority required (53%+)
 (define-constant approval-threshold u16)
 (define-constant board-size u30)
+
+;; Proposals expire after ~7 days (1008 blocks at 10 min/block)
+(define-constant proposal-expiry-blocks u1008)
 
 ;; Proposal types
 (define-constant proposal-type-coordinator u1)
@@ -44,7 +48,9 @@
     amount: uint,             ;; For special tax: amount to mint. For regular: new rate
     memo: (optional (buff 256)),
     executed: bool,
-    approval-count: uint
+    approval-count: uint,
+    created-at: uint,         ;; Block height when created
+    expires-at: uint          ;; Block height when expires
   })
 
 ;; Votes on proposals
@@ -62,6 +68,7 @@
     (
       (proposer tx-sender)
       (proposal-id (var-get proposal-nonce))
+      (now stacks-block-height)
     )
     (asserts! (is-trustee-caller) err-not-trustee)
 
@@ -72,7 +79,9 @@
       amount: u0,
       memo: none,
       executed: false,
-      approval-count: u1
+      approval-count: u1,
+      created-at: now,
+      expires-at: (+ now proposal-expiry-blocks)
     })
 
     ;; Proposer automatically votes yes
@@ -88,6 +97,7 @@
     (
       (proposer tx-sender)
       (proposal-id (var-get proposal-nonce))
+      (now stacks-block-height)
     )
     (asserts! (is-trustee-caller) err-not-trustee)
 
@@ -98,7 +108,9 @@
       amount: new-rate,
       memo: none,
       executed: false,
-      approval-count: u1
+      approval-count: u1,
+      created-at: now,
+      expires-at: (+ now proposal-expiry-blocks)
     })
 
     (map-set proposal-votes {proposal-id: proposal-id, voter: proposer} true)
@@ -113,6 +125,7 @@
     (
       (proposer tx-sender)
       (proposal-id (var-get proposal-nonce))
+      (now stacks-block-height)
     )
     (asserts! (is-trustee-caller) err-not-trustee)
 
@@ -123,7 +136,9 @@
       amount: amount,
       memo: memo,
       executed: false,
-      approval-count: u1
+      approval-count: u1,
+      created-at: now,
+      expires-at: (+ now proposal-expiry-blocks)
     })
 
     (map-set proposal-votes {proposal-id: proposal-id, voter: proposer} true)
@@ -142,6 +157,7 @@
     (asserts! (is-trustee-caller) err-not-trustee)
     (asserts! (is-none (map-get? proposal-votes {proposal-id: proposal-id, voter: voter})) err-already-voted)
     (asserts! (not (get executed proposal)) err-proposal-executed)
+    (asserts! (<= stacks-block-height (get expires-at proposal)) err-proposal-expired)
 
     (map-set proposal-votes {proposal-id: proposal-id, voter: voter} true)
     (map-set proposals proposal-id
@@ -159,6 +175,7 @@
     (asserts! (is-eq (get proposal-type proposal) proposal-type-coordinator) err-invalid-proposal-type)
     (asserts! (not (get executed proposal)) err-proposal-executed)
     (asserts! (>= (get approval-count proposal) approval-threshold) err-threshold-not-met)
+    (asserts! (<= stacks-block-height (get expires-at proposal)) err-proposal-expired)
 
     ;; Mark executed
     (map-set proposals proposal-id (merge proposal {executed: true}))
@@ -181,6 +198,7 @@
     (asserts! (is-eq (get proposal-type proposal) proposal-type-regular-tax) err-invalid-proposal-type)
     (asserts! (not (get executed proposal)) err-proposal-executed)
     (asserts! (>= (get approval-count proposal) approval-threshold) err-threshold-not-met)
+    (asserts! (<= stacks-block-height (get expires-at proposal)) err-proposal-expired)
 
     ;; Mark executed
     (map-set proposals proposal-id (merge proposal {executed: true}))
@@ -200,6 +218,7 @@
     (asserts! (is-eq (get proposal-type proposal) proposal-type-special-tax) err-invalid-proposal-type)
     (asserts! (not (get executed proposal)) err-proposal-executed)
     (asserts! (>= (get approval-count proposal) approval-threshold) err-threshold-not-met)
+    (asserts! (<= stacks-block-height (get expires-at proposal)) err-proposal-expired)
 
     ;; Mark executed
     (map-set proposals proposal-id (merge proposal {executed: true}))

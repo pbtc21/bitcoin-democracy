@@ -11,12 +11,14 @@
 (define-constant err-not-token-owner (err u101))
 (define-constant err-insufficient-balance (err u102))
 (define-constant err-invalid-amount (err u103))
+(define-constant err-metadata-locked (err u104))
 
 ;; Token configuration - set by factory on deployment
 (define-data-var token-name (string-ascii 32) "CityBTC")
 (define-data-var token-symbol (string-ascii 10) "CITYBTC")
 (define-data-var token-uri (optional (string-utf8 256)) none)
 (define-data-var token-decimals uint u6)
+(define-data-var metadata-locked bool false)
 
 ;; Authorized minter (treasury contract)
 (define-data-var authorized-minter principal contract-owner)
@@ -73,13 +75,16 @@
     (var-set authorized-minter new-minter)
     (ok true)))
 
-;; Initialize token metadata (called by factory)
+;; Initialize token metadata (called by factory - one time only)
 (define-public (initialize (name (string-ascii 32)) (symbol (string-ascii 10)) (uri (optional (string-utf8 256))))
   (begin
     (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (not (var-get metadata-locked)) err-metadata-locked)
     (var-set token-name name)
     (var-set token-symbol symbol)
     (var-set token-uri uri)
+    (var-set metadata-locked true)
+    (print {event: "token-initialized", name: name, symbol: symbol})
     (ok true)))
 
 ;; Read-only helpers

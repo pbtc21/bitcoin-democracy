@@ -16,6 +16,7 @@
 (define-constant err-not-coordinator (err u105))
 (define-constant err-not-board (err u106))
 (define-constant err-no-coordinator (err u107))
+(define-constant err-already-initialized (err u108))
 
 ;; Conversion rate: 1 sBTC (8 decimals) = 1,000,000 tokens (6 decimals)
 (define-constant sbtc-to-token-multiplier u10000)
@@ -32,6 +33,7 @@
 
 ;; Board contract - can dilute
 (define-data-var board-contract principal contract-owner)
+(define-data-var board-contract-set bool false)
 
 ;; sBTC contract reference (set via set-sbtc-contract after deployment)
 (define-data-var sbtc-contract principal contract-owner)
@@ -125,11 +127,14 @@
     (print {event: "coordinator-set", coordinator: new-coordinator})
     (ok true)))
 
-;; Set board contract (one-time setup)
+;; Set board contract (one-time setup - cannot be changed after)
 (define-public (set-board-contract (board principal))
   (begin
     (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (not (var-get board-contract-set)) err-already-initialized)
     (var-set board-contract board)
+    (var-set board-contract-set true)
+    (print {event: "board-contract-set", board: board})
     (ok true)))
 
 ;; Emergency pause

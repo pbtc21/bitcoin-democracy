@@ -28,11 +28,13 @@ depends_on = ["city-btc-token", "mock-sbtc"]
 [contracts.board]
 path = "contracts/board.clar"
 depends_on = ["hyperelection", "treasury"]
+clarity_version = 3
+epoch = "3.0"
 
 [contracts.democracy-factory]
 path = "contracts/democracy-factory.clar"
-clarity_version = 2
-epoch = "2.5"
+clarity_version = 3
+epoch = "3.0"
 
 [repl.analysis]
 passes = ["check_checker"]

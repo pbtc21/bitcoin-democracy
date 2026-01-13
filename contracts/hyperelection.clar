@@ -47,34 +47,33 @@
 (define-map trustees principal bool)
 (define-data-var trustee-list (list 30 principal) (list))
 
-;; Recall votes
-(define-map recall-votes principal uint)
+;; Recall votes - keyed by epoch to auto-invalidate after recall
+(define-map recall-votes {voter: principal, epoch: uint} uint)
 
 ;; Check if delegation would create a loop
-;; We check up to 30 hops (max possible chain length)
+;; Clarity doesn't support recursion, so we unroll 30 hops explicitly
+;; Uses fold over a list of indices to traverse the delegation chain
+(define-private (follow-delegation (idx uint) (acc {current: (optional principal), found-loop: bool, target: principal}))
+  (if (get found-loop acc)
+    acc  ;; Already found loop, short-circuit
+    (match (get current acc)
+      curr
+        (if (is-eq curr (get target acc))
+          (merge acc {found-loop: true})
+          (merge acc {current: (map-get? delegations curr)}))
+      acc)))  ;; No current, end of chain
+
 (define-private (would-create-loop (delegator principal) (target principal))
   (if (is-eq delegator target)
     true
-    (let ((hop1 (map-get? delegations target)))
-      (match hop1 h1
-        (if (is-eq delegator h1) true
-          (let ((hop2 (map-get? delegations h1)))
-            (match hop2 h2
-              (if (is-eq delegator h2) true
-                (let ((hop3 (map-get? delegations h2)))
-                  (match hop3 h3
-                    (if (is-eq delegator h3) true
-                      (let ((hop4 (map-get? delegations h3)))
-                        (match hop4 h4
-                          (if (is-eq delegator h4) true
-                            (let ((hop5 (map-get? delegations h4)))
-                              (match hop5 h5
-                                (is-eq delegator h5)
-                                false)))
-                          false)))
-                    false)))
-              false)))
-        false))))
+    (let
+      (
+        (initial {current: (map-get? delegations target), found-loop: false, target: delegator})
+        (result (fold follow-delegation
+          (list u0 u1 u2 u3 u4 u5 u6 u7 u8 u9 u10 u11 u12 u13 u14 u15 u16 u17 u18 u19 u20 u21 u22 u23 u24 u25 u26 u27 u28 u29)
+          initial))
+      )
+      (get found-loop result))))
 
 ;; Delegate stake to another account
 ;; This is transitive - your stake flows through the chain
@@ -152,17 +151,18 @@
   (let
     (
       (voter tx-sender)
+      (current-epoch (var-get election-epoch))
       (stake (unwrap! (contract-call? .city-btc-token get-balance voter) err-zero-stake))
-      (current-vote (default-to u0 (map-get? recall-votes voter)))
+      (current-vote (default-to u0 (map-get? recall-votes {voter: voter, epoch: current-epoch})))
     )
     (asserts! (var-get election-finalized) err-election-not-finalized)
     (asserts! (> stake u0) err-zero-stake)
 
-    ;; Update recall vote
-    (map-set recall-votes voter stake)
+    ;; Update recall vote (keyed by epoch so previous epoch votes don't count)
+    (map-set recall-votes {voter: voter, epoch: current-epoch} stake)
     (var-set recall-stake (+ (- (var-get recall-stake) current-vote) stake))
 
-    (print {event: "recall-vote", voter: voter, stake: stake, total-recall: (var-get recall-stake)})
+    (print {event: "recall-vote", voter: voter, stake: stake, epoch: current-epoch, total-recall: (var-get recall-stake)})
     (ok stake)))
 
 ;; Execute recall if threshold met
