@@ -23,9 +23,15 @@
 (define-constant err-recall-threshold-not-met (err u108))
 (define-constant err-zero-stake (err u109))
 (define-constant err-invalid-trustees (err u110))
+(define-constant err-challenge-pending (err u111))
+(define-constant err-no-pending-finalization (err u112))
+(define-constant err-challenge-period-active (err u113))
 
 ;; Board size = 30 cities
 (define-constant board-size u30)
+
+;; Challenge period: ~24 hours (144 blocks at 10 min/block)
+(define-constant challenge-period u144)
 
 ;; Recall requires 33% of prior election stake
 (define-constant recall-threshold-percent u33)
@@ -49,6 +55,12 @@
 
 ;; Recall votes - keyed by epoch to auto-invalidate after recall
 (define-map recall-votes {voter: principal, epoch: uint} uint)
+
+;; Pending finalization (challenge period)
+(define-data-var pending-trustees (list 30 principal) (list))
+(define-data-var pending-stake uint u0)
+(define-data-var finalization-proposed-at uint u0)
+(define-data-var finalization-pending bool false)
 
 ;; Check if delegation would create a loop
 ;; Clarity doesn't support recursion, so we unroll 30 hops explicitly
@@ -117,14 +129,57 @@
         (ok true))
       err-not-delegated)))
 
-;; Finalize election with top 30 trustees
-;; Trustees are provided off-chain (calculated from delegation graph)
-;; On-chain we verify they're valid principals
-(define-public (finalize-election (new-trustees (list 30 principal)) (total-stake uint))
+;; ============================================
+;; ELECTION FINALIZATION WITH CHALLENGE PERIOD
+;; ============================================
+
+;; Step 1: Propose finalization (starts 24-hour challenge window)
+;; Trustees are calculated off-chain from delegation graph
+(define-public (propose-finalization (new-trustees (list 30 principal)) (total-stake uint))
   (begin
     (asserts! (is-eq tx-sender contract-owner) err-owner-only)
     (asserts! (not (var-get election-finalized)) err-election-finalized)
+    (asserts! (not (var-get finalization-pending)) err-challenge-pending)
     (asserts! (is-eq (len new-trustees) board-size) err-invalid-trustees)
+
+    ;; Store pending finalization
+    (var-set pending-trustees new-trustees)
+    (var-set pending-stake total-stake)
+    (var-set finalization-proposed-at stacks-block-height)
+    (var-set finalization-pending true)
+
+    (print {event: "finalization-proposed", trustees: new-trustees, total-stake: total-stake, challenge-ends: (+ stacks-block-height challenge-period)})
+    (ok true)))
+
+;; Step 2: Challenge finalization (anyone can call during challenge period)
+;; If challenge is valid, cancels pending finalization
+;; Note: In production, this would verify a merkle proof of correct ranking
+;; For now, only contract-owner can cancel (trusted challenge review)
+(define-public (cancel-finalization)
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (var-get finalization-pending) err-no-pending-finalization)
+
+    ;; Clear pending state
+    (var-set pending-trustees (list))
+    (var-set pending-stake u0)
+    (var-set finalization-pending false)
+
+    (print {event: "finalization-cancelled"})
+    (ok true)))
+
+;; Step 3: Execute finalization (after challenge period ends)
+;; Anyone can call once challenge period has passed
+(define-public (execute-finalization)
+  (let
+    (
+      (proposed-at (var-get finalization-proposed-at))
+      (new-trustees (var-get pending-trustees))
+      (total-stake (var-get pending-stake))
+    )
+    (asserts! (var-get finalization-pending) err-no-pending-finalization)
+    (asserts! (not (var-get election-finalized)) err-election-finalized)
+    (asserts! (>= stacks-block-height (+ proposed-at challenge-period)) err-challenge-period-active)
 
     ;; Set trustees
     (var-set trustee-list new-trustees)
@@ -135,7 +190,31 @@
     (var-set election-finalized true)
     (var-set election-epoch (+ (var-get election-epoch) u1))
 
+    ;; Clear pending state
+    (var-set finalization-pending false)
+
     (print {event: "election-finalized", trustees: new-trustees, total-stake: total-stake, epoch: (var-get election-epoch)})
+    (ok true)))
+
+;; Legacy function for backwards compatibility (immediate finalization)
+;; Only works if no challenge period is desired (emergency use)
+(define-public (finalize-election (new-trustees (list 30 principal)) (total-stake uint))
+  (begin
+    (asserts! (is-eq tx-sender contract-owner) err-owner-only)
+    (asserts! (not (var-get election-finalized)) err-election-finalized)
+    (asserts! (not (var-get finalization-pending)) err-challenge-pending)
+    (asserts! (is-eq (len new-trustees) board-size) err-invalid-trustees)
+
+    ;; Set trustees directly (no challenge period)
+    (var-set trustee-list new-trustees)
+    (map set-trustee new-trustees)
+
+    ;; Record election stake for recall threshold
+    (var-set election-stake total-stake)
+    (var-set election-finalized true)
+    (var-set election-epoch (+ (var-get election-epoch) u1))
+
+    (print {event: "election-finalized-immediate", trustees: new-trustees, total-stake: total-stake, epoch: (var-get election-epoch)})
     (ok true)))
 
 ;; Helper to set trustee
@@ -229,3 +308,25 @@
               (list delegate1 delegate2)))
           (list delegate1)))
       (list))))
+
+;; Challenge period read-only functions
+
+(define-read-only (is-finalization-pending)
+  (var-get finalization-pending))
+
+(define-read-only (get-pending-trustees)
+  (var-get pending-trustees))
+
+(define-read-only (get-pending-stake)
+  (var-get pending-stake))
+
+(define-read-only (get-challenge-end-block)
+  (if (var-get finalization-pending)
+    (some (+ (var-get finalization-proposed-at) challenge-period))
+    none))
+
+(define-read-only (can-execute-finalization)
+  (and
+    (var-get finalization-pending)
+    (not (var-get election-finalized))
+    (>= stacks-block-height (+ (var-get finalization-proposed-at) challenge-period))))

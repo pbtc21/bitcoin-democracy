@@ -1,6 +1,6 @@
-;; democracy-factory.clar
-;; Factory contract for deploying and managing all 30 city-states
-;; Each city gets its own token name/symbol but shares contract logic
+;; democracy-factory.clar (aka bloc-registry)
+;; Registry for the 30 regional blocs and user affiliations
+;; Blocs are identity/community, not separate sovereigns - all serve one king
 
 ;; Constants
 (define-constant contract-owner tx-sender)
@@ -28,6 +28,16 @@
 
 ;; City name to ID mapping
 (define-map city-name-to-id (string-ascii 32) uint)
+
+;; ============================================
+;; BLOC IDENTITY
+;; ============================================
+
+;; User's chosen bloc (optional - can join/leave anytime)
+(define-map user-bloc principal uint)
+
+;; Track member count per bloc (for leaderboard)
+(define-map bloc-member-count uint uint)
 
 ;; State
 (define-data-var city-count uint u0)
@@ -151,6 +161,53 @@
     (var-set factory-active active)
     (ok true)))
 
+;; ============================================
+;; BLOC IDENTITY FUNCTIONS
+;; ============================================
+
+;; Join a bloc (anyone can join any bloc, can switch anytime)
+(define-public (join-bloc (city-id uint))
+  (let
+    (
+      (user tx-sender)
+      (city (unwrap! (map-get? cities city-id) err-city-not-found))
+      (current-bloc (map-get? user-bloc user))
+    )
+    (asserts! (get active city) err-city-not-found)
+
+    ;; If user was in a different bloc, decrement old bloc's count
+    (match current-bloc old-bloc
+      (map-set bloc-member-count old-bloc
+        (- (default-to u1 (map-get? bloc-member-count old-bloc)) u1))
+      true)
+
+    ;; Set new bloc
+    (map-set user-bloc user city-id)
+
+    ;; Increment new bloc's count
+    (map-set bloc-member-count city-id
+      (+ (default-to u0 (map-get? bloc-member-count city-id)) u1))
+
+    (print {event: "joined-bloc", user: user, bloc-id: city-id, bloc-name: (get name city)})
+    (ok city-id)))
+
+;; Leave current bloc (go bloc-less)
+(define-public (leave-bloc)
+  (let
+    (
+      (user tx-sender)
+      (current-bloc (unwrap! (map-get? user-bloc user) err-city-not-found))
+    )
+    ;; Decrement bloc's count
+    (map-set bloc-member-count current-bloc
+      (- (default-to u1 (map-get? bloc-member-count current-bloc)) u1))
+
+    ;; Remove user's bloc affiliation
+    (map-delete user-bloc user)
+
+    (print {event: "left-bloc", user: user, former-bloc: current-bloc})
+    (ok true)))
+
 ;; Read-only functions
 
 (define-read-only (get-city (city-id uint))
@@ -213,3 +270,27 @@
 
 (define-read-only (get-africa-cities)
   (list u27 u28 u29))
+
+;; ============================================
+;; BLOC IDENTITY READ-ONLY
+;; ============================================
+
+;; Get user's current bloc (none if not affiliated)
+(define-read-only (get-user-bloc (user principal))
+  (map-get? user-bloc user))
+
+;; Get bloc member count
+(define-read-only (get-bloc-member-count (city-id uint))
+  (default-to u0 (map-get? bloc-member-count city-id)))
+
+;; Get user's bloc info (name, ticker, etc.)
+(define-read-only (get-user-bloc-info (user principal))
+  (match (map-get? user-bloc user)
+    bloc-id (map-get? cities bloc-id)
+    none))
+
+;; Check if user is in a specific bloc
+(define-read-only (is-user-in-bloc (user principal) (city-id uint))
+  (match (map-get? user-bloc user)
+    bloc-id (is-eq bloc-id city-id)
+    false))

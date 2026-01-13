@@ -20,10 +20,23 @@ depends_on = ["sip-010-trait"]
 [contracts.hyperelection]
 path = "contracts/hyperelection.clar"
 depends_on = ["city-btc-token"]
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.yield-trait]
+path = "contracts/yield-trait.clar"
+
+[contracts.mock-zest]
+path = "contracts/mock-zest.clar"
+depends_on = ["yield-trait", "mock-sbtc"]
+clarity_version = 3
+epoch = "3.0"
 
 [contracts.treasury]
 path = "contracts/treasury.clar"
-depends_on = ["city-btc-token", "mock-sbtc"]
+depends_on = ["city-btc-token", "mock-sbtc", "mock-zest"]
+clarity_version = 3
+epoch = "3.0"
 
 [contracts.board]
 path = "contracts/board.clar"

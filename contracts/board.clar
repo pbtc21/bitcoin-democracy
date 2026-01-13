@@ -32,6 +32,7 @@
 (define-constant proposal-type-coordinator u1)
 (define-constant proposal-type-regular-tax u2)
 (define-constant proposal-type-special-tax u3)
+(define-constant proposal-type-spend-limit u4)
 
 ;; State
 (define-data-var proposal-nonce uint u0)
@@ -147,6 +148,34 @@
     (print {event: "proposal-special-tax", id: proposal-id, proposer: proposer, amount: amount})
     (ok proposal-id)))
 
+;; Propose new daily spending limit for coordinator
+(define-public (propose-spend-limit (new-limit uint))
+  (let
+    (
+      (proposer tx-sender)
+      (proposal-id (var-get proposal-nonce))
+      (now stacks-block-height)
+    )
+    (asserts! (is-trustee-caller) err-not-trustee)
+
+    (map-set proposals proposal-id {
+      proposer: proposer,
+      proposal-type: proposal-type-spend-limit,
+      target: tx-sender, ;; Not used
+      amount: new-limit,
+      memo: none,
+      executed: false,
+      approval-count: u1,
+      created-at: now,
+      expires-at: (+ now proposal-expiry-blocks)
+    })
+
+    (map-set proposal-votes {proposal-id: proposal-id, voter: proposer} true)
+    (var-set proposal-nonce (+ proposal-id u1))
+
+    (print {event: "proposal-spend-limit", id: proposal-id, proposer: proposer, new-limit: new-limit})
+    (ok proposal-id)))
+
 ;; Vote on any proposal
 (define-public (vote (proposal-id uint))
   (let
@@ -227,6 +256,26 @@
     (try! (contract-call? .treasury board-dilute (get amount proposal)))
 
     (print {event: "special-tax-executed", proposal-id: proposal-id, amount: (get amount proposal)})
+    (ok true)))
+
+;; Execute spend limit change
+(define-public (execute-spend-limit (proposal-id uint))
+  (let
+    (
+      (proposal (unwrap! (map-get? proposals proposal-id) err-proposal-not-found))
+    )
+    (asserts! (is-eq (get proposal-type proposal) proposal-type-spend-limit) err-invalid-proposal-type)
+    (asserts! (not (get executed proposal)) err-proposal-executed)
+    (asserts! (>= (get approval-count proposal) approval-threshold) err-threshold-not-met)
+    (asserts! (<= stacks-block-height (get expires-at proposal)) err-proposal-expired)
+
+    ;; Mark executed
+    (map-set proposals proposal-id (merge proposal {executed: true}))
+
+    ;; Update treasury spending limit
+    (try! (contract-call? .treasury set-daily-limit (get amount proposal)))
+
+    (print {event: "spend-limit-updated", proposal-id: proposal-id, new-limit: (get amount proposal)})
     (ok true)))
 
 ;; Read-only functions
