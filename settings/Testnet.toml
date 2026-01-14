@@ -1,9 +1,8 @@
 [network]
 name = "testnet"
 deployment_fee_rate = 10
-epoch = "2.5"
+epoch = "3.0"
 
 [accounts.deployer]
-mnemonic = "square armor pledge excess staff explain midnight final hungry dose cinnamon buzz total dad purity alert gather zero rain paper swap bar rhythm cradle"
-# Mainnet: SP1734723Q6206N1BAWQCJ5H9YFQBEPB96DRQB7KC
-# Testnet: ST1734723Q6206N1BAWQCJ5H9YFQBEPB96F8CY7KP
+mnemonic = "drama conduct illegal senior any inhale impact rain stereo hood lens long foster fluid erosion creek morning laugh shaft horror digital actor false soldier"
+# Fresh wallet for v2 deployment

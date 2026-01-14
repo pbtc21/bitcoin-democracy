@@ -49,6 +49,35 @@ path = "contracts/democracy-factory.clar"
 clarity_version = 3
 epoch = "3.0"
 
+[contracts.city-btc-token-hardened]
+path = "contracts/city-btc-token-hardened.clar"
+depends_on = ["sip-010-trait"]
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.hyperelection-hardened]
+path = "contracts/hyperelection-hardened.clar"
+depends_on = ["city-btc-token-hardened"]
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.treasury-hardened]
+path = "contracts/treasury-hardened.clar"
+depends_on = ["city-btc-token-hardened", "mock-sbtc"]
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.board-hardened]
+path = "contracts/board-hardened.clar"
+depends_on = ["hyperelection-hardened", "treasury-hardened"]
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.democracy-factory-hardened]
+path = "contracts/democracy-factory-hardened.clar"
+clarity_version = 3
+epoch = "3.0"
+
 [repl.analysis]
 passes = ["check_checker"]
 
