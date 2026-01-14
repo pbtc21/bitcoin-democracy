@@ -339,6 +339,48 @@
     }
 
     /* Responsive */
+    .cities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+      margin-top: 32px;
+    }
+
+    .region {
+      background: var(--darker);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    .region h3 {
+      color: var(--orange);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .city-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .city {
+      background: #30363d;
+      color: var(--light);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .city:hover {
+      background: var(--orange);
+      color: var(--darker);
+    }
+
     @media (max-width: 768px) {
       .hero-stats {
         gap: 32px;
@@ -369,7 +411,7 @@
     <div class="hero-stats">
       <div class="stat">
         <div class="stat-value">30</div>
-        <div class="stat-label">Elected Trustees</div>
+        <div class="stat-label">City Blocs</div>
       </div>
       <div class="stat">
         <div class="stat-value">16</div>
@@ -378,6 +420,74 @@
       <div class="stat">
         <div class="stat-value">0</div>
         <div class="stat-label">Admin Keys</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 30 City Blocs -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">30 City Blocs</h2>
+      <p class="section-subtitle">
+        One global treasury. 30 cities. Join your bloc, elect your trustees, govern together.
+      </p>
+
+      <div class="cities-grid">
+        <div class="region">
+          <h3>North America</h3>
+          <div class="city-list">
+            <span class="city">Austin</span>
+            <span class="city">Las Vegas</span>
+            <span class="city">Los Angeles</span>
+            <span class="city">Mexico City</span>
+            <span class="city">Miami</span>
+            <span class="city">New York City</span>
+            <span class="city">San Francisco</span>
+            <span class="city">Toronto</span>
+          </div>
+        </div>
+        <div class="region">
+          <h3>Europe</h3>
+          <div class="city-list">
+            <span class="city">Amsterdam</span>
+            <span class="city">Berlin</span>
+            <span class="city">Lisbon</span>
+            <span class="city">London</span>
+            <span class="city">Paris</span>
+            <span class="city">Stockholm</span>
+            <span class="city">Tallinn</span>
+            <span class="city">Zurich</span>
+          </div>
+        </div>
+        <div class="region">
+          <h3>Asia</h3>
+          <div class="city-list">
+            <span class="city">Bangalore</span>
+            <span class="city">Bangkok</span>
+            <span class="city">Dubai</span>
+            <span class="city">Ho Chi Minh</span>
+            <span class="city">Seoul</span>
+            <span class="city">Singapore</span>
+            <span class="city">Tel Aviv</span>
+            <span class="city">Tokyo</span>
+          </div>
+        </div>
+        <div class="region">
+          <h3>Oceania</h3>
+          <div class="city-list">
+            <span class="city">Auckland</span>
+            <span class="city">Melbourne</span>
+            <span class="city">Sydney</span>
+          </div>
+        </div>
+        <div class="region">
+          <h3>Africa</h3>
+          <div class="city-list">
+            <span class="city">Cairo</span>
+            <span class="city">Cape Town</span>
+            <span class="city">Lagos</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -614,8 +724,7 @@
     <div class="container">
       <p>
         Built on <a href="https://stacks.co">Stacks</a> &middot;
-        Secured by <a href="https://bitcoin.org">Bitcoin</a> &middot;
-        Inspired by <a href="https://graymirror.substack.com">Curtis Yarvin</a>
+        Secured by <a href="https://bitcoin.org">Bitcoin</a>
       </p>
       <p style="margin-top: 16px; font-size: 0.8rem;">
         Deployed on Testnet: ST2J6CYV7YEBQANTA668TVB2PE30EE09J2WWT8RRF
