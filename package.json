@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.7.0",
-    "@stacks/transactions": "^6.17.0",
+    "@stacks/transactions": "^7.3.1",
     "vitest": "^2.1.8"
   },
   "dependencies": {
@@ -16,6 +16,7 @@
     "@scure/bip39": "^2.0.1",
     "@stacks/network": "^7.3.1",
     "@stacks/wallet-sdk": "^7.2.0",
+    "bip39": "^3.1.0",
     "c32check": "^2.0.0"
   }
 }

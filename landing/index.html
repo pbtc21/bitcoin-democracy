@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitcoin Democracy - Censorship-Resistant Governance</title>
+  <style>
+    :root {
+      --orange: #f7931a;
+      --dark: #0d1117;
+      --darker: #010409;
+      --gray: #8b949e;
+      --light: #c9d1d9;
+      --white: #f0f6fc;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--darker);
+      color: var(--light);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Hero */
+    .hero {
+      min-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 80px 24px;
+      background: radial-gradient(ellipse at top, #1a1a2e 0%, var(--darker) 70%);
+    }
+
+    .hero-icon {
+      font-size: 80px;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span {
+      color: var(--orange);
+    }
+
+    .hero .tagline {
+      font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+      color: var(--gray);
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 48px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--orange);
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Sections */
+    section {
+      padding: 100px 0;
+    }
+
+    section:nth-child(even) {
+      background: var(--dark);
+    }
+
+    .section-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .section-subtitle {
+      color: var(--gray);
+      font-size: 1.1rem;
+      margin-bottom: 48px;
+      max-width: 600px;
+    }
+
+    /* How it Works */
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .flow-step {
+      background: var(--darker);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 32px 24px;
+      text-align: center;
+      position: relative;
+    }
+
+    .flow-step::after {
+      content: '\2192';
+      position: absolute;
+      right: -20px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--orange);
+      font-size: 1.5rem;
+    }
+
+    .flow-step:last-child::after {
+      display: none;
+    }
+
+    .flow-icon {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+    }
+
+    .flow-step h3 {
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+
+    .flow-step p {
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+
+    /* Features Grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .feature {
+      background: var(--darker);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 32px;
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 16px;
+    }
+
+    .feature h3 {
+      color: var(--white);
+      margin-bottom: 12px;
+      font-size: 1.2rem;
+    }
+
+    .feature p {
+      color: var(--gray);
+      font-size: 0.95rem;
+    }
+
+    /* Contracts Table */
+    .contracts-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 32px;
+    }
+
+    .contracts-table th,
+    .contracts-table td {
+      padding: 16px 20px;
+      text-align: left;
+      border-bottom: 1px solid #30363d;
+    }
+
+    .contracts-table th {
+      color: var(--gray);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+    }
+
+    .contracts-table td {
+      color: var(--light);
+    }
+
+    .contracts-table code {
+      background: #30363d;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: var(--orange);
+    }
+
+    /* Parameters */
+    .params {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .param {
+      background: var(--dark);
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .param-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--orange);
+      margin-bottom: 8px;
+    }
+
+    .param-label {
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+
+    /* Architecture Diagram */
+    .architecture {
+      background: var(--darker);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 48px;
+      margin-top: 32px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 0.85rem;
+      overflow-x: auto;
+    }
+
+    .architecture pre {
+      color: var(--light);
+      line-height: 1.8;
+    }
+
+    .architecture .highlight {
+      color: var(--orange);
+    }
+
+    /* CTA */
+    .cta {
+      text-align: center;
+      padding: 100px 24px;
+      background: linear-gradient(180deg, var(--dark) 0%, var(--darker) 100%);
+    }
+
+    .cta h2 {
+      font-size: 2.5rem;
+      color: var(--white);
+      margin-bottom: 16px;
+    }
+
+    .cta p {
+      color: var(--gray);
+      margin-bottom: 32px;
+      font-size: 1.1rem;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--orange);
+      color: var(--darker);
+      padding: 16px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(247, 147, 26, 0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid #30363d;
+      color: var(--light);
+      margin-left: 16px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--orange);
+      box-shadow: none;
+    }
+
+    /* Footer */
+    footer {
+      padding: 48px 24px;
+      text-align: center;
+      border-top: 1px solid #30363d;
+    }
+
+    footer p {
+      color: var(--gray);
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: var(--orange);
+      text-decoration: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-stats {
+        gap: 32px;
+      }
+
+      .flow-step::after {
+        display: none;
+      }
+
+      .btn-secondary {
+        margin-left: 0;
+        margin-top: 16px;
+        display: block;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-icon">&#8383;</div>
+    <h1>Bitcoin <span>Democracy</span></h1>
+    <p class="tagline">
+      Censorship-resistant treasury governance on Stacks.
+      No admin keys. No pause buttons. Unstoppable.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-value">30</div>
+        <div class="stat-label">Elected Trustees</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">16</div>
+        <div class="stat-label">Votes to Act</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Admin Keys</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it Works -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-subtitle">
+        Deposit Bitcoin. Get voting power. Elect representatives. Govern the treasury.
+      </p>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-icon">&#128176;</div>
+          <h3>Deposit</h3>
+          <p>Deposit sBTC into the treasury and receive CityBTC governance tokens</p>
+        </div>
+        <div class="flow-step">
+          <div class="flow-icon">&#128499;</div>
+          <h3>Delegate</h3>
+          <p>Delegate your voting power to trusted representatives</p>
+        </div>
+        <div class="flow-step">
+          <div class="flow-icon">&#127942;</div>
+          <h3>Elect</h3>
+          <p>Top 30 vote-getters become trustees after 24h challenge period</p>
+        </div>
+        <div class="flow-step">
+          <div class="flow-icon">&#9878;</div>
+          <h3>Govern</h3>
+          <p>Trustees hire a coordinator who manages daily operations</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Censorship Resistant -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">Truly Unstoppable</h2>
+      <p class="section-subtitle">
+        Built to resist government shutdown. Once deployed, no one can stop it.
+      </p>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">&#128293;</div>
+          <h3>Burned Admin Keys</h3>
+          <p>After setup, admin keys are permanently destroyed by sending to a burn address. No backdoors, no recovery.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#9940;</div>
+          <h3>No Pause Function</h3>
+          <p>Unlike other DeFi protocols, there's no pause button. Deposits and withdrawals always work.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128279;</div>
+          <h3>No External Dependencies</h3>
+          <p>No yield protocols that could freeze funds. Pure on-chain logic with no external kill switches.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128101;</div>
+          <h3>Permissionless Execution</h3>
+          <p>Anyone can trigger governance actions once conditions are met. No gatekeepers.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128274;</div>
+          <h3>Challenge Periods</h3>
+          <p>24-hour delay on elections allows community to verify results before finalization.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128260;</div>
+          <h3>Recall Mechanism</h3>
+          <p>Token holders can recall the board with 33% stake, resetting elections if needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Architecture -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">Architecture</h2>
+      <p class="section-subtitle">
+        Five hardened smart contracts working together.
+      </p>
+
+      <div class="architecture">
+        <pre>
+                              <span class="highlight">TOKEN HOLDERS</span>
+                                    │
+                    ┌───────────────┼───────────────┐
+                    ▼               ▼               ▼
+              ┌──────────┐   ┌──────────┐   ┌──────────┐
+              │ <span class="highlight">DEPOSIT</span>  │   │ <span class="highlight">DELEGATE</span> │   │  <span class="highlight">RECALL</span>  │
+              │  sBTC    │   │  votes   │   │  board   │
+              └────┬─────┘   └────┬─────┘   └────┬─────┘
+                   │              │              │
+                   ▼              ▼              ▼
+        ┌─────────────────────────────────────────────────┐
+        │                  <span class="highlight">HYPERELECTION</span>                  │
+        │         Stake-weighted delegation chains         │
+        │            Top 30 become trustees                │
+        └─────────────────────┬───────────────────────────┘
+                              │
+                              ▼
+        ┌─────────────────────────────────────────────────┐
+        │                     <span class="highlight">BOARD</span>                        │
+        │              30 trustees, 16/30 votes            │
+        │     Hire coordinator │ Set limits │ Tax          │
+        └─────────────────────┬───────────────────────────┘
+                              │
+                              ▼
+        ┌─────────────────────────────────────────────────┐
+        │                   <span class="highlight">TREASURY</span>                       │
+        │          Coordinator spends within limits        │
+        │             Daily cap: 1 BTC default             │
+        └─────────────────────────────────────────────────┘
+        </pre>
+      </div>
+
+      <table class="contracts-table">
+        <thead>
+          <tr>
+            <th>Contract</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>treasury-hardened</code></td>
+            <td>Holds sBTC, mints governance tokens, enforces spending limits</td>
+          </tr>
+          <tr>
+            <td><code>city-btc-token-hardened</code></td>
+            <td>SIP-010 governance token representing treasury stake</td>
+          </tr>
+          <tr>
+            <td><code>hyperelection-hardened</code></td>
+            <td>Stake-weighted delegation, elects 30 trustees</td>
+          </tr>
+          <tr>
+            <td><code>board-hardened</code></td>
+            <td>16/30 multisig for coordinator, limits, and taxation</td>
+          </tr>
+          <tr>
+            <td><code>democracy-factory-hardened</code></td>
+            <td>30 city blocs for regional identity and affiliation</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Parameters -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">Governance Parameters</h2>
+      <p class="section-subtitle">
+        Carefully tuned for security and efficiency.
+      </p>
+
+      <div class="params">
+        <div class="param">
+          <div class="param-value">30</div>
+          <div class="param-label">Board Size</div>
+        </div>
+        <div class="param">
+          <div class="param-value">16/30</div>
+          <div class="param-label">Approval Threshold</div>
+        </div>
+        <div class="param">
+          <div class="param-value">24h</div>
+          <div class="param-label">Challenge Period</div>
+        </div>
+        <div class="param">
+          <div class="param-value">33%</div>
+          <div class="param-label">Recall Threshold</div>
+        </div>
+        <div class="param">
+          <div class="param-value">1 BTC</div>
+          <div class="param-label">Daily Spend Limit</div>
+        </div>
+        <div class="param">
+          <div class="param-value">7 days</div>
+          <div class="param-label">Proposal Expiry</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust Model -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">Trust Model</h2>
+      <p class="section-subtitle">
+        One trust assumption. Everything else is trustless code.
+      </p>
+
+      <div class="features">
+        <div class="feature">
+          <div class="feature-icon">&#9989;</div>
+          <h3>Trustless</h3>
+          <p>
+            <strong>Elections:</strong> On-chain, verifiable, challengeable<br>
+            <strong>Governance:</strong> Transparent voting, permissionless execution<br>
+            <strong>Treasury:</strong> Immutable rules, no admin override<br>
+            <strong>Tokens:</strong> Fixed supply mechanics, no hidden minting
+          </p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">&#128272;</div>
+          <h3>Trust Required</h3>
+          <p>
+            <strong>sBTC Signers:</strong> 15 entities custody the Bitcoin backing sBTC.
+            This is the only external trust assumption. If sBTC works, Bitcoin Democracy works.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <h2>Ready to Govern?</h2>
+    <p>Deposit sBTC. Get voting power. Shape the future.</p>
+    <a href="https://github.com" class="btn">View on GitHub</a>
+    <a href="https://explorer.hiro.so" class="btn btn-secondary">Testnet Explorer</a>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>
+        Built on <a href="https://stacks.co">Stacks</a> &middot;
+        Secured by <a href="https://bitcoin.org">Bitcoin</a> &middot;
+        Inspired by <a href="https://graymirror.substack.com">Curtis Yarvin</a>
+      </p>
+      <p style="margin-top: 16px; font-size: 0.8rem;">
+        Deployed on Testnet: ST2J6CYV7YEBQANTA668TVB2PE30EE09J2WWT8RRF
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>
