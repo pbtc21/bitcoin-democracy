@@ -90,6 +90,14 @@ All served by `x402-partner-sites` worker:
 | **Bitcoin Faces NFT** | https://faces.pbtc21.dev | Bitcoin Faces collection |
 | **Wallet ID Card** | https://id.pbtc21.dev | Wallet identity cards |
 
+## Games & Viral
+
+| Endpoint | URL | Description |
+|----------|-----|-------------|
+| **The Button** | https://the-button.p-d07.workers.dev | Global countdown game - press to reset, last wins pot (sBTC) |
+| **STX Storm** | https://stx-rain.p-d07.workers.dev | Live blockchain visualizer - lightning/thunder/rain for txs |
+| **Roast My Wallet** | https://roast-my-wallet.p-d07.workers.dev | AI roasts your crypto portfolio decisions |
+
 ## Utility Services
 
 | Endpoint | URL | Description |
@@ -153,4 +161,4 @@ To add stacksx402.com to Cloudflare:
 
 ---
 
-*Last updated: 2026-01-15*
+*Last updated: 2026-01-15 03:25 PST*
