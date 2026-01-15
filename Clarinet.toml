@@ -78,6 +78,17 @@ path = "contracts/democracy-factory-hardened.clar"
 clarity_version = 3
 epoch = "3.0"
 
+[contracts.city-key-reveal]
+path = "contracts/city-key-reveal.clar"
+clarity_version = 3
+epoch = "3.0"
+
+[contracts.x402-gate]
+path = "contracts/x402-gate.clar"
+depends_on = ["mock-sbtc"]
+clarity_version = 3
+epoch = "3.0"
+
 [repl.analysis]
 passes = ["check_checker"]
 

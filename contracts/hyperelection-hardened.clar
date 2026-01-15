@@ -30,6 +30,10 @@
 (define-constant ERR-ADMIN-BURNED (err u120))
 (define-constant ERR-NOT-BURNED-YET (err u121))
 (define-constant ERR-PROPOSER-ONLY (err u122))
+(define-constant ERR-ABNEGATION-REQUIRED (err u123))
+(define-constant ERR-ALREADY-ABNEGATED (err u124))
+(define-constant ERR-ABNEGATION-NOT-STARTED (err u125))
+(define-constant ERR-CANNOT-ABNEGATE-TO-SELF (err u126))
 
 ;; Burn address
 (define-constant BURN-ADDRESS 'SP000000000000000000002Q6VF78)
@@ -71,6 +75,20 @@
 
 ;; Recall votes - keyed by epoch
 (define-map recall-votes {voter: principal, epoch: uint} uint)
+
+;; ============================================
+;; INITIAL ABNEGATION STATE
+;; ============================================
+;; Per Yarvin: "After choosing the first coordinator, all the initial
+;; trustees resign immediately - each giving their key to someone they
+;; know, who they think will make an even better trustee."
+
+(define-data-var abnegation-started bool false)
+(define-data-var abnegation-complete bool false)
+(define-data-var abnegation-count uint u0)
+
+;; Track which trustees have abnegated
+(define-map has-abnegated principal bool)
 
 ;; ============================================
 ;; CHALLENGE PERIOD STATE
@@ -282,6 +300,89 @@
     (ok true)))
 
 ;; ============================================
+;; INITIAL ABNEGATION (Yarvin's "resignation ritual")
+;; ============================================
+;; After first coordinator is appointed, all initial trustees must
+;; resign their seat to a trusted successor. This creates the
+;; "second board" which is the permanent governing body.
+
+;; Called by board contract when first coordinator is appointed
+(define-public (start-abnegation)
+  (begin
+    (asserts! (is-eq contract-caller (var-get board-contract)) ERR-NOT-TRUSTEE)
+    (asserts! (var-get election-finalized) ERR-ELECTION-NOT-FINALIZED)
+    (asserts! (not (var-get abnegation-started)) ERR-ALREADY-ABNEGATED)
+    (asserts! (is-eq (var-get election-epoch) u2) ERR-ABNEGATION-NOT-STARTED) ;; Only after first election (epoch goes 1->2)
+
+    (var-set abnegation-started true)
+
+    (print {event: "abnegation-started", epoch: (var-get election-epoch),
+            message: "Initial trustees must now resign to successors"})
+    (ok true)))
+
+;; Trustee resigns their seat to a successor
+(define-public (abnegate (successor principal))
+  (let
+    (
+      (trustee tx-sender)
+    )
+    (asserts! (var-get abnegation-started) ERR-ABNEGATION-NOT-STARTED)
+    (asserts! (not (var-get abnegation-complete)) ERR-ALREADY-ABNEGATED)
+    (asserts! (is-trustee trustee) ERR-NOT-TRUSTEE)
+    (asserts! (is-none (map-get? has-abnegated trustee)) ERR-ALREADY-ABNEGATED)
+    (asserts! (not (is-eq trustee successor)) ERR-CANNOT-ABNEGATE-TO-SELF)
+
+    ;; Set temp vars for list replacement (Clarity has no closures)
+    (var-set abnegation-old trustee)
+    (var-set abnegation-new successor)
+
+    ;; Remove old trustee
+    (map-delete trustees trustee)
+    (map-set has-abnegated trustee true)
+
+    ;; Add successor as trustee
+    (map-set trustees successor true)
+
+    ;; Update trustee list (replace trustee with successor)
+    (var-set trustee-list (map replace-trustee-in-list (var-get trustee-list)))
+
+    ;; Increment count
+    (var-set abnegation-count (+ (var-get abnegation-count) u1))
+
+    ;; Check if all have abnegated
+    (if (is-eq (var-get abnegation-count) BOARD-SIZE)
+      (begin
+        (var-set abnegation-complete true)
+        (print {event: "abnegation-complete",
+                message: "Second board now governs permanently"})
+        true)
+      true)
+
+    (print {event: "trustee-abnegated", old-trustee: trustee, successor: successor,
+            abnegated-count: (var-get abnegation-count)})
+    (ok successor)))
+
+;; Temp storage for abnegation (Clarity doesn't have closures)
+(define-data-var abnegation-old principal BURN-ADDRESS)
+(define-data-var abnegation-new principal BURN-ADDRESS)
+
+;; Helper to replace trustee in list
+(define-private (replace-trustee-in-list (current principal))
+  (if (is-eq current (var-get abnegation-old))
+    (var-get abnegation-new)
+    current))
+
+;; Board contract reference for abnegation trigger
+(define-data-var board-contract principal tx-sender)
+
+(define-public (set-board-contract-for-abnegation (board principal))
+  (begin
+    (asserts! (is-eq tx-sender (var-get contract-owner)) ERR-PROPOSER-ONLY)
+    (asserts! (not (var-get admin-burned)) ERR-ADMIN-BURNED)
+    (var-set board-contract board)
+    (ok true)))
+
+;; ============================================
 ;; READ-ONLY FUNCTIONS
 ;; ============================================
 
@@ -346,3 +447,27 @@
     (var-get finalization-pending)
     (not (var-get election-finalized))
     (>= stacks-block-height (+ (var-get finalization-proposed-at) CHALLENGE-PERIOD))))
+
+;; ============================================
+;; ABNEGATION READ-ONLY FUNCTIONS
+;; ============================================
+
+(define-read-only (is-abnegation-started)
+  (var-get abnegation-started))
+
+(define-read-only (is-abnegation-complete)
+  (var-get abnegation-complete))
+
+(define-read-only (get-abnegation-count)
+  (var-get abnegation-count))
+
+(define-read-only (has-trustee-abnegated (trustee principal))
+  (default-to false (map-get? has-abnegated trustee)))
+
+(define-read-only (get-abnegation-status)
+  {
+    started: (var-get abnegation-started),
+    complete: (var-get abnegation-complete),
+    count: (var-get abnegation-count),
+    required: BOARD-SIZE
+  })

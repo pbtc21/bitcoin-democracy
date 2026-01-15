@@ -51,6 +51,7 @@
 (define-data-var proposal-nonce uint u0)
 (define-data-var coordinator (optional principal) none)
 (define-data-var regular-tax-rate uint u50) ;; 0.5% annual (50 basis points)
+(define-data-var first-coordinator-appointed bool false) ;; Track if abnegation should trigger
 
 ;; Proposals
 (define-map proposals
@@ -242,6 +243,7 @@
   (let
     (
       (proposal (unwrap! (map-get? proposals proposal-id) ERR-PROPOSAL-NOT-FOUND))
+      (is-first (not (var-get first-coordinator-appointed)))
     )
     (asserts! (is-eq (get proposal-type proposal) PROPOSAL-TYPE-COORDINATOR) ERR-INVALID-PROPOSAL-TYPE)
     (asserts! (not (get executed proposal)) ERR-PROPOSAL-EXECUTED)
@@ -255,8 +257,19 @@
     ;; Update treasury with new coordinator
     (try! (contract-call? .treasury-hardened set-coordinator (get target proposal)))
 
+    ;; Trigger initial abnegation if this is the FIRST coordinator (Yarvin's resignation ritual)
+    (if is-first
+      (begin
+        (var-set first-coordinator-appointed true)
+        (try! (contract-call? .hyperelection-hardened start-abnegation))
+        (print {event: "abnegation-triggered",
+                message: "Initial trustees must now resign to successors"})
+        true)
+      true)
+
     (print {event: "coordinator-appointed", proposal-id: proposal-id,
-            coordinator: (get target proposal), executed-by: tx-sender})
+            coordinator: (get target proposal), executed-by: tx-sender,
+            first-coordinator: is-first})
     (ok true)))
 
 (define-public (execute-regular-tax (proposal-id uint))
@@ -348,3 +361,6 @@
       (not (get executed proposal))
       (<= stacks-block-height (get expires-at proposal)))
     false))
+
+(define-read-only (is-first-coordinator-appointed)
+  (var-get first-coordinator-appointed))
